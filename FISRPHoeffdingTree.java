@@ -1,7 +1,5 @@
 /*
- *    HoeffdingTree.java
- *    Copyright (C) 2007 University of Waikato, Hamilton, New Zealand
- *    @author Richard Kirkby (rkirkby@cs.waikato.ac.nz)
+ *    FISRPHoeffdingTree.java
  *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
@@ -45,50 +43,7 @@ import scala.Int;
 
 import java.util.*;
 
-/**
- * Hoeffding Tree or VFDT.
- *
- * A Hoeffding tree is an incremental, anytime decision tree induction algorithm
- * that is capable of learning from massive data streams, assuming that the
- * distribution generating examples does not change over time. Hoeffding trees
- * exploit the fact that a small sample can often be enough to choose an optimal
- * splitting attribute. This idea is supported mathematically by the Hoeffding
- * bound, which quantiﬁes the number of observations (in our case, examples)
- * needed to estimate some statistics within a prescribed precision (in our
- * case, the goodness of an attribute).</p> <p>A theoretically appealing feature
- * of Hoeffding Trees not shared by other incremental decision tree learners is
- * that it has sound guarantees of performance. Using the Hoeffding bound one
- * can show that its output is asymptotically nearly identical to that of a
- * non-incremental learner using inﬁnitely many examples. See for details:</p>
- *
- * <p>G. Hulten, L. Spencer, and P. Domingos. Mining time-changing data streams.
- * In KDD’01, pages 97–106, San Francisco, CA, 2001. ACM Press.</p>
- *
- * <p>Parameters:</p> <ul> <li> -m : Maximum memory consumed by the tree</li>
- * <li> -n : Numeric estimator to use : <ul> <li>Gaussian approximation
- * evaluating 10 splitpoints</li> <li>Gaussian approximation evaluating 100
- * splitpoints</li> <li>Greenwald-Khanna quantile summary with 10 tuples</li>
- * <li>Greenwald-Khanna quantile summary with 100 tuples</li>
- * <li>Greenwald-Khanna quantile summary with 1000 tuples</li> <li>VFML method
- * with 10 bins</li> <li>VFML method with 100 bins</li> <li>VFML method with
- * 1000 bins</li> <li>Exhaustive binary tree</li> </ul> </li> <li> -e : How many
- * instances between memory consumption checks</li> <li> -g : The number of
- * instances a leaf should observe between split attempts</li> <li> -s : Split
- * criterion to use. Example : InfoGainSplitCriterion</li> <li> -c : The
- * allowable error in split decision, values closer to 0 will take longer to
- * decide</li> <li> -t : Threshold below which a split will be forced to break
- * ties</li> <li> -b : Only allow binary splits</li> <li> -z : Stop growing as
- * soon as memory limit is hit</li> <li> -r : Disable poor attributes</li> <li>
- * -p : Disable pre-pruning</li> 
- *  <li> -l : Leaf prediction to use: MajorityClass (MC), Naive Bayes (NB) or NaiveBayes
- * adaptive (NBAdaptive).</li>
- *  <li> -q : The number of instances a leaf should observe before
- * permitting Naive Bayes</li>
- * </ul>
- *
- * @author Richard Kirkby (rkirkby@cs.waikato.ac.nz)
- * @version $Revision: 7 $
- */
+
 public class FISRPHoeffdingTree extends AbstractClassifier implements MultiClassClassifier,
                                                                  CapabilitiesHandler {
 
@@ -185,11 +140,11 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             this.observedClassDistribution = new DoubleVector(classObservations);
         }
 
-        public int calcByteSize() {
-            return (int) (SizeOf.sizeOf(this) + SizeOf.fullSizeOf(this.observedClassDistribution));
+        public long calcByteSize() {
+            return SizeOf.sizeOf(this) + SizeOf.fullSizeOf(this.observedClassDistribution);
         }
 
-        public int calcByteSizeIncludingSubtree() {
+        public long calcByteSizeIncludingSubtree() {
             return calcByteSize();
         }
 
@@ -255,14 +210,14 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
         protected AutoExpandVector<Node> children; // = new AutoExpandVector<Node>();
 
         @Override
-        public int calcByteSize() {
+        public long calcByteSize() {
             return super.calcByteSize()
-                    + (int) (SizeOf.sizeOf(this.children) + SizeOf.fullSizeOf(this.splitTest));
+                    + SizeOf.sizeOf(this.children) + SizeOf.fullSizeOf(this.splitTest);
         }
 
         @Override
-        public int calcByteSizeIncludingSubtree() {
-            int byteSize = calcByteSize();
+        public long calcByteSizeIncludingSubtree() {
+            long byteSize = calcByteSize();
             for (Node child : this.children) {
                 if (child != null) {
                     byteSize += child.calcByteSizeIncludingSubtree();
@@ -422,9 +377,9 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
         }
 
         @Override
-        public int calcByteSize() {
+        public long calcByteSize() {
             return super.calcByteSize()
-                    + (int) (SizeOf.fullSizeOf(this.attributeObservers));
+                    + SizeOf.fullSizeOf(this.attributeObservers);
         }
 
         @Override
@@ -470,7 +425,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                         new double[][]{preSplitDist})));
             }
 
-            // A partir da segunda ramificação, o Selected Feature não é forçado
+            // Selects Feature like SRP
             if (ht.measureTreeDepth() > 0){
                 for (int i = 0; i < this.attributeObservers.size(); i++) {
                     AttributeClassObserver obs = this.attributeObservers.get(i);
@@ -483,7 +438,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                     }
                 }
             }
-            // Selected Feature é forçado
+            // Prioritize Feature
             else {
                 LinkedList<Integer> bestFeatures = FeatureImportanceStreamingRandomPatches.getBestFeatures();
                 List<AttributeSplitSuggestion> bestSuggestionsfromBestFeatures = new LinkedList<AttributeSplitSuggestion>();
@@ -534,8 +489,8 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
 
     protected boolean growthAllowed;
 
-    public int calcByteSize() {
-        int size = (int) SizeOf.sizeOf(this);
+    public long calcByteSize() {
+        long size = SizeOf.sizeOf(this);
         if (this.treeRoot != null) {
             size += this.treeRoot.calcByteSizeIncludingSubtree();
         }
@@ -551,7 +506,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
     }
 
     @Override
-    public int measureByteSize() {
+    public long measureByteSize() {
         return calcByteSize();
     }
 
@@ -835,7 +790,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             this.inactiveLeafByteSizeEstimate = (double) totalInactiveSize
                     / this.inactiveLeafNodeCount;
         }
-        int actualModelSize = this.measureByteSize();
+        long actualModelSize = this.measureByteSize();
         double estimatedModelSize = (this.activeLeafNodeCount
                 * this.activeLeafByteSizeEstimate + this.inactiveLeafNodeCount
                 * this.inactiveLeafByteSizeEstimate);
