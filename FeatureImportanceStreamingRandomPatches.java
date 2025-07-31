@@ -1,7 +1,6 @@
 /*
- *    StreamingRandomPatches.java
+ *    FeatureImportanceStreamingRandomPatches.java
  *
- *    @author Heitor Murilo Gomes (heitor dot gomes at waikato dot ac dot nz)
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -43,36 +42,7 @@ import moa.options.ClassOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Streaming Random Patches
- *
- * <p>Streaming Random Patches (SRP). This ensemble method uses a hoeffding tree by default,
- * but it can be used with any other base model (differently from random forest variations).
- * This algorithm can be used to simulate bagging or random subspaces, see parameter -t.
- * The default algorithm uses both bagging and random subspaces, namely Random Patches.</p>
- *
- * <p>See details in:<br> Heitor Murilo Gomes, Jesse Read, Albert Bifet.
- * Streaming Random Patches for Evolving Data Stream Classification.
- * IEEE International Conference on Data Mining (ICDM), 2019.</p>
- *
- * <p>Parameters:</p> <ul>
- * <li>-l : Classiﬁer to train. Default to a Hoeffding Tree, but it is not restricted to decision trees.</li>
- * <li>-s : The number of learners in the ensemble.</li>
- * <li>-o : How the number of features is interpreted (4 options):
- * "Specified m (integer value)", "sqrt(M)+1", "M-(sqrt(M)+1)".</li>
- * <li>-m : Number of features allowed considered for each split. Negative values corresponds to M - m.</li>
- * <li>-t : The training method to use: Random Patches, Random Subspaces or Bagging.</li>
- * <li>-a : The lambda value for the poisson distribution (used to emulate bagging).</li>
- * <li>-x : Change detector for drifts and its parameters.</li>
- * <li>-p : Change detector for warnings.</li>
- * <li>-w : Should use weighted voting?</li>
- * <li>-u : Should use drift detection? If disabled, then the bkg learner is also disabled.</li>
- * <li>-q : Should use bkg learner? If disabled, then trees are reset immediately.</li>
- * </ul>
- *
- * @author Heitor Murilo Gomes (heitor dot gomes at waikato dot ac dot nz)
- * @version $Revision: 1 $
- */
+
 public class FeatureImportanceStreamingRandomPatches extends AbstractClassifier implements MultiClassClassifier,
         CapabilitiesHandler, FeatureImportanceClassifier {
 
@@ -166,10 +136,6 @@ public class FeatureImportanceStreamingRandomPatches extends AbstractClassifier 
     protected int featureImportancesInquiries = 0;
 
     protected int changeSubspace = 0;
-
-    //LinkedList<Double> CurrentInstanceArray = null;
-
-    //LinkedList<Double> previousInstanceArray = null;
 
     protected double[] CurrentInstanceArray;
 
@@ -351,8 +317,6 @@ public class FeatureImportanceStreamingRandomPatches extends AbstractClassifier 
 
         if (detectChange == true){
             // Everytime a change in the features is detected, the importance learner is reset
-            //this.featureImportanceLearner.resetLearning();
-            //this.featureImportanceLearner = null;
             this.featureImportances = null;
             this.nodeCountAtLastFeatureImportanceInquiry = 0;
             this.featureImportancesInquiries = 0;
@@ -777,11 +741,8 @@ public class FeatureImportanceStreamingRandomPatches extends AbstractClassifier 
                 correlatedFeaturesArray = new LinkedList<>();
                 HashSet<Integer> changedFeaturesSet = new HashSet<>(changedFeaturesArray);
 
-                // Lista para armazenar os índices correspondentes
-                // Iterar sobre this.featureIndexes e verificar a presença no HashSet
                 for (int j = 0; j < this.featureIndexes.length; ++j) {
                     if (changedFeaturesSet.contains(this.featureIndexes[j])) {
-                        // Se o valor estiver presente, adiciona o índice ao correlatedFeaturesArray
                         correlatedFeaturesArray.add(j);
                     }
                 }
@@ -907,12 +868,10 @@ public class FeatureImportanceStreamingRandomPatches extends AbstractClassifier 
                         this.numberOfWarningsDetected++;
                         triggerWarning(instance, instancesSeen, random);
                         skipTrigger = true;
-                        //System.out.println("Warning detected: " + instancesSeen);
                     }
                     if (updateLearner == true && skipTrigger == false){
                         triggerWarning(instance, instancesSeen, random);
                         this.reset(instance, instancesSeen, random);
-                        //System.out.println("Space change: " + instancesSeen);
                         // Reset background learners when changes in the ranking happened
                         if (!this.disableRankingChangesBkgLearnerReset) {
                             this.bkgLearner = null;
@@ -928,7 +887,6 @@ public class FeatureImportanceStreamingRandomPatches extends AbstractClassifier 
                     this.numberOfDriftsDetected++;
                     // There was a change, this model must be reset
                     this.reset(instance, instancesSeen, random);
-                    //System.out.println("Drift detected: " + instancesSeen);
                 }
             }
         }
@@ -972,6 +930,5 @@ public class FeatureImportanceStreamingRandomPatches extends AbstractClassifier 
 
     public static LinkedList<Integer> getBestFeatures(){
         return correlatedFeaturesArray;
-        //return changedFeaturesArray;
     }
 }
